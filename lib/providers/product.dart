@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 class Product with ChangeNotifier {
   final String id;
@@ -17,8 +20,28 @@ class Product with ChangeNotifier {
     this.isFavorite = false,
   });
 
-  void toggleFavStatus() {
-    isFavorite = !isFavorite;
+  void _setFav(bool newVal) {
+    isFavorite = newVal;
     notifyListeners();
+  }
+
+  Future<void> toggleFavStatus() async {
+    // Firebase URL, erased mine for github
+    final url =
+        Uri.parse("https://my_prefix.firebasedatabase.app/products/$id.json");
+    _setFav(!isFavorite);
+    try {
+      final resp = await http.patch(
+        url,
+        body: json.encode({
+          'isFavourite': isFavorite,
+        }),
+      );
+      if (resp.statusCode >= 400) {
+        _setFav(!isFavorite);
+      }
+    } catch (err) {
+      _setFav(!isFavorite);
+    }
   }
 }
